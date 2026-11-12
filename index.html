@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAPOR - Tienda de Videojuegos</title>
+    <style>
+        :root {
+            --bg-main: #1b2838;
+            --bg-secondary: #2a475e;
+            --bg-dark: #171a21;
+            --text-main: #c7d5e0;
+            --text-highlight: #66c0f4;
+            --btn-green: #7c9c30;
+            --btn-green-hover: #8fc13e;
+            --btn-blue: #2a475e;
+            --btn-blue-hover: #66c0f4;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Motiva Sans', Arial, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); }
+        
+        /* Navbar */
+        header { background-color: var(--bg-dark); padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .logo { font-size: 28px; font-weight: bold; color: white; letter-spacing: 2px; }
+        nav { display: flex; gap: 20px; }
+        nav a { color: var(--text-main); text-decoration: none; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; padding: 5px; }
+        nav a:hover { color: var(--text-highlight); }
+        
+        .user-actions { display: flex; align-items: center; gap: 15px; }
+        .wallet { color: var(--btn-green); font-weight: bold; font-size: 14px; }
+        .btn { padding: 8px 15px; border: none; border-radius: 2px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; }
+        .btn-green { background: linear-gradient(to right, #799905 5%, #536904 95%); }
+        .btn-green:hover { background: linear-gradient(to right, #a4d007 5%, #536904 95%); }
+        .btn-blue { background-color: var(--bg-secondary); color: var(--text-highlight); }
+        .btn-blue:hover { color: white; }
+
+        /* Contenedores */
+        .container { max-width: 1000px; margin: 30px auto; display: none; }
+        .active-section { display: block; }
+
+        /* Tienda */
+        .search-bar { width: 100%; padding: 12px; background-color: rgba(0,0,0,0.4); border: 1px solid var(--bg-secondary); color: white; border-radius: 4px; margin-bottom: 20px; outline: none; font-size: 16px;}
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .game-card { background-color: rgba(0,0,0,0.2); transition: 0.3s; cursor: pointer; position: relative; border-radius: 4px; overflow: hidden; }
+        .game-card:hover { background-color: var(--bg-secondary); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .game-img { width: 100%; height: 160px; background-color: #333; object-fit: cover; }
+        .game-info { padding: 15px; }
+        .game-title { font-size: 18px; color: white; margin-bottom: 10px; font-weight: bold; }
+        .game-price { display: flex; justify-content: space-between; align-items: center; }
+        .price { color: var(--btn-green); font-weight: bold; }
+        
+        /* Biblioteca */
+        .library-grid { display: grid; grid-template-columns: 250px 1fr; gap: 20px; }
+        .game-list { background-color: rgba(0,0,0,0.3); padding: 10px; height: 600px; overflow-y: auto; border-radius: 4px; }
+        .game-list-item { padding: 12px; cursor: pointer; margin-bottom: 5px; background: rgba(255,255,255,0.05); border-radius: 3px; font-weight: bold;}
+        .game-list-item:hover { background: var(--bg-secondary); color: white; }
+        .library-detail { background-color: rgba(0,0,0,0.3); padding: 25px; display: flex; flex-direction: column; border-radius: 4px; }
+        .play-btn-container { margin-top: 20px; display: flex; align-items: center; gap: 20px; }
+        .play-btn { font-size: 24px; padding: 15px 40px; background: #4c6b22; color: white; border: none; cursor: pointer; border-radius: 4px; display: none; font-weight: bold;}
+        .play-btn:hover { background: #8fc13e; }
+        .play-stats { font-size: 14px; color: #8f98a0; }
+        .progress-bar { width: 100%; height: 20px; background: #111; margin-top: 20px; display: none; border-radius: 10px; overflow: hidden; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);}
+        .progress-fill { height: 100%; background: var(--text-highlight); width: 0%; transition: width 0.5s; }
+
+        /* Detalles de Juego (Modal) */
+        #game-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px);}
+        .modal-content { background: var(--bg-main); width: 85%; max-width: 900px; max-height: 90%; overflow-y: auto; position: relative; border-radius: 6px; border: 1px solid var(--bg-secondary); box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
+        .close { position: absolute; right: 20px; top: 20px; font-size: 30px; cursor: pointer; color: #8f98a0; transition: 0.2s;}
+        .close:hover { color: white; transform: scale(1.1);}
+        .modal-header { padding: 30px; background: var(--bg-dark); border-bottom: 1px solid #000; }
+        .modal-body { padding: 30px; display: grid; grid-template-columns: 2fr 1fr; gap: 25px;}
+        .reqs { font-size: 13px; color: #8f98a0; background: rgba(0,0,0,0.2); padding: 15px; margin-top: 20px; border-radius: 4px;}
+        
+        .reviews-section { margin-top: 30px; border-top: 1px solid var(--bg-secondary); padding-top: 20px;}
+        textarea { width: 100%; height: 80px; background: rgba(0,0,0,0.5); color: white; border: 1px solid var(--bg-secondary); padding: 10px; margin-bottom: 10px; resize: vertical; border-radius: 4px;}
+        
+        /* Comunidad & Chat */
+        .chat-sidebar { position: fixed; right: 20px; bottom: 0; width: 300px; background: var(--bg-dark); border-left: 1px solid var(--bg-secondary); border-right: 1px solid var(--bg-secondary); border-top: 1px solid var(--bg-secondary); height: 50vh; display: flex; flex-direction: column; transform: translateY(calc(100% - 40px)); transition: 0.3s; border-radius: 8px 8px 0 0; z-index: 500; box-shadow: 0 -5px 15px rgba(0,0,0,0.5);}
+        .chat-sidebar.open { transform: translateY(0); }
+        .chat-header { padding: 12px 15px; background: linear-gradient(to bottom, #2a475e, #171a21); cursor: pointer; display: flex; justify-content: space-between; font-weight: bold; color: white; border-radius: 8px 8px 0 0;}
+        .chat-friends { flex-grow: 1; padding: 10px; overflow-y: auto; font-size: 14px; background: rgba(0,0,0,0.2);}
+        .friend { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; cursor: pointer; padding: 5px; border-radius: 4px; transition: 0.2s;}
+        .friend:hover { background: rgba(255,255,255,0.05); }
+        .friend .status { width: 10px; height: 10px; border-radius: 50%; background: #666; }
+        .friend.online .status { background: var(--text-highlight); box-shadow: 0 0 5px var(--text-highlight); }
+        .friend.playing .status { background: var(--btn-green-hover); box-shadow: 0 0 5px var(--btn-green-hover); }
+
+        .banner { width: 100%; height: 300px; background: linear-gradient(45deg, #171a21, #2a475e); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 45px; font-weight: bold; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 30px; border-radius: 8px; position: relative; overflow: hidden;}
+        .banner::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('https://www.transparenttextures.com/patterns/cubes.png'); opacity: 0.1; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">VAPOR</div>
+        <nav>
+            <a onclick="showSection('tienda')">TIENDA</a>
+            <a onclick="showSection('biblioteca')">BIBLIOTECA</a>
+            <a onclick="showSection('comunidad')">COMUNIDAD</a>
+            <a onclick="showSection('perfil')">DAVID</a>
+        </nav>
+        <div class="user-actions">
+            <span class="wallet" id="wallet-balance">$0.00 COP</span>
+            <button class="btn btn-blue" onclick="addFunds()">Recargar Cartera</button>
+            <button class="btn btn-green" onclick="toggleChat()">Amigos y Chat</button>
+        </div>
+    </header>
+
+    <!-- TIENDA -->
+    <div id="tienda" class="container active-section">
+        <div class="banner">
+            <div>FESTIVAL DE JUEGOS VAPOR</div>
+            <div style="font-size: 18px; font-weight: normal; color: var(--text-highlight); margin-top: 10px;">Descubre las mejores ofertas en títulos de Inteligencia Artificial y RPGs</div>
+        </div>
+        <input type="text" class="search-bar" id="search" placeholder="Buscar en la tienda por nombre o género..." onkeyup="filterGames()">
+        <div class="game-grid" id="store-grid">
+            <!-- Renderizado desde JS -->
+        </div>
+    </div>
+
+    <!-- BIBLIOTECA -->
+    <div id="biblioteca" class="container">
+        <h1 style="color: white; margin-bottom: 20px; font-weight: 300;">COLECCIÓN DE JUEGOS</h1>
+        <div class="library-grid">
+            <div class="game-list" id="lib-list">
+                <!-- Juegos en propiedad -->
+            </div>
+            <div class="library-detail" id="lib-detail">
+                <h2 style="color: white; margin-bottom: 10px; font-size: 28px;">Selecciona un juego</h2>
+                <div style="width: 100%; height: 300px; background: #111; margin-bottom: 20px; border-radius: 4px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);"></div>
+                <div class="progress-bar" id="install-bar"><div class="progress-fill" id="install-fill"></div></div>
+                <div class="play-btn-container">
+                    <button class="btn btn-blue" id="install-btn" style="display: none; padding: 15px 40px; font-size: 18px;" onclick="installGame()">INSTALAR</button>
+                    <button class="play-btn" id="play-btn" onclick="playGame()">JUGAR</button>
+                    <div class="play-stats" id="play-stats" style="display: none;">
+                        TIEMPO DE JUEGO<br><span id="play-hours" style="color: white; font-size: 20px; font-weight: bold;">0 horas</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMUNIDAD -->
+    <div id="comunidad" class="container">
+        <h1 style="color: white; margin-bottom: 20px;">Punto de Encuentro de la Comunidad</h1>
+        <div style="background: rgba(0,0,0,0.3); padding: 25px; border-radius: 4px;">
+            <textarea id="post-text" placeholder="¿Qué tienes en mente o a qué estás jugando?"></textarea>
+            <div style="display: flex; justify-content: flex-end;">
+                <button class="btn btn-blue" onclick="makePost()">Publicar estado</button>
+            </div>
+            <div id="posts-container" style="margin-top: 30px;">
+                <div style="background: rgba(0,0,0,0.2); padding: 15px; margin-bottom: 10px; border-left: 3px solid #666;">
+                    <div style="color: #ccc; font-weight: bold; margin-bottom: 5px;">Diego</div>
+                    <div>Alguien para jugar unas misiones en Red Dead Redemption 2 esta noche?</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- PERFIL -->
+    <div id="perfil" class="container">
+        <div style="display: flex; gap: 30px; background: rgba(0,0,0,0.3); padding: 30px; border-radius: 4px;">
+            <div style="width: 150px; height: 150px; background: var(--bg-secondary); border: 2px solid var(--text-highlight); display: flex; align-items: center; justify-content: center; font-size: 50px; font-weight: bold; color: white;">D</div>
+            <div>
+                <h1 style="color: white; margin-bottom: 10px;">David</h1>
+                <p style="color: #8f98a0; margin-bottom: 20px;">Soacha, Colombia</p>
+                <div style="display: flex; gap: 20px;">
+                    <div style="background: rgba(0,0,0,0.5); padding: 15px; border-radius: 4px; text-align: center;">
+                        <div style="font-size: 24px; color: white; font-weight: bold;" id="profile-games-count">0</div>
+                        <div style="font-size: 12px; color: #8f98a0;">JUEGOS</div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.5); padding: 15px; border-radius: 4px; text-align: center;">
+                        <div style="font-size: 24px; color: white; font-weight: bold;">Nivel 12</div>
+                        <div style="font-size: 12px; color: #8f98a0;">INSIGNIAS: Data Scientist</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETALLE DE JUEGO -->
+    <div id="game-modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div class="modal-header">
+                <h1 id="modal-title" style="color: white; font-size: 32px;"></h1>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <div id="modal-img" style="width: 100%; height: 350px; background: #333; margin-bottom: 15px; border-radius: 4px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);"></div>
+                    <p id="modal-desc" style="line-height: 1.6; font-size: 15px;"></p>
+                    <div class="reqs">
+                        <strong style="color: white; font-size: 14px;">Requisitos del sistema (PC):</strong><br><br>
+                        <strong style="color: var(--text-main);">Mínimos:</strong> Windows 10 64-bit, 8GB RAM, Intel Core i5, Nvidia GTX 1060, 50GB espacio disponible.<br>
+                        <strong style="color: var(--text-main);">Recomendados:</strong> Windows 11, 16GB RAM, Intel Core i7, Nvidia RTX 3060, 50GB SSD.
+                    </div>
+                    
+                    <div class="reviews-section">
+                        <h3 style="color: white; margin-bottom: 10px;">Escribir una reseña</h3>
+                        <textarea placeholder="Describe lo que te gustó o no de este juego. Tu reseña será pública."></textarea>
+                        <button class="btn btn-blue">👍 Recomendar</button>
+                        <button class="btn btn-blue" style="background: #333; color: white;">👎 No Recomendar</button>
+                    </div>
+                </div>
+                <div>
+                    <div style="background: rgba(0,0,0,0.4); padding: 20px; margin-bottom: 20px; border-radius: 4px; border: 1px solid var(--bg-dark);">
+                        <div style="font-size: 12px; color: #8f98a0; margin-bottom: 5px;">Comprar para tu propia cuenta</div>
+                        <h2 id="modal-price" class="price" style="font-size: 26px; margin-bottom: 15px;"></h2>
+                        <button class="btn btn-green" style="width: 100%; padding: 15px; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);" id="buy-btn">Añadir al Carrito</button>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 4px; font-size: 13px; color: #8f98a0; line-height: 1.5;">
+                        <span style="color: white;">Desarrollador:</span> VAPOR Studios<br>
+                        <span style="color: white;">Editor:</span> VAPOR Publishing<br>
+                        <span style="color: white;">Fecha de lanzamiento:</span> Octubre 2026<br><br>
+                        Compatible con mando (PlayStation 5 DualSense)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHAT AMIGOS -->
+    <div class="chat-sidebar" id="chat">
+        <div class="chat-header" onclick="toggleChat()">
+            <span>Amigos (3 Conectados)</span>
+            <span style="font-size: 12px;">▲</span>
+        </div>
+        <div class="chat-friends">
+            <div style="font-size: 11px; color: #66c0f4; font-weight: bold; margin: 10px 0 5px 0;">JUGANDO</div>
+            <div class="friend playing"><div class="status"></div> 
+                <div>
+                    <div style="color: white; font-weight: bold;">Diego</div>
+                    <div style="font-size: 11px; color: var(--btn-green-hover);">Red Dead Redemption 2</div>
+                </div>
+            </div>
+            
+            <div style="font-size: 11px; color: #66c0f4; font-weight: bold; margin: 15px 0 5px 0;">ONLINE</div>
+            <div class="friend online"><div class="status"></div> <div style="color: var(--text-highlight);">Andrés</div></div>
+            <div class="friend online"><div class="status"></div> <div style="color: var(--text-highlight);">Juan Diego</div></div>
+            
+            <div style="font-size: 11px; color: #666; font-weight: bold; margin: 15px 0 5px 0;">OFFLINE</div>
+            <div class="friend"><div class="status"></div> <div style="color: #666;">Usuario Desconectado</div></div>
+        </div>
+    </div>
+
+    <script>
+        // Base de Datos de Juegos
+        const games = [
+            { id: 1, title: "Red Dead Redemption 2", price: 150000, genre: "Acción / Aventura / Mundo Abierto", img: "linear-gradient(to right, #6b0000, #b20000)", desc: "El épico mundo abierto del salvaje oeste de Rockstar Games. Disfruta de la mejor experiencia visual configurando el HDR en tu consola o PC. Una historia inmersiva de forajidos." },
+            { id: 2, title: "Hydros IA Simulator", price: 45000, genre: "Simulación / Ingeniería / IA", img: "linear-gradient(to right, #004e92, #000428)", desc: "Simulador avanzado de ingeniería acústica para detección de fugas en tuberías urbanas mediante inteligencia artificial. Ideal para proyectos de Aprendizaje por Servicio (ApS) alineados con el ODS 9." },
+            { id: 3, title: "Data Science & AI Tycoon", price: 65000, genre: "Gestión / Estrategia / Educación", img: "linear-gradient(to right, #11998e, #38ef7d)", desc: "Maneja complejas bases de datos, limpia datasets gigantes y crea modelos predictivos usando arquitecturas en la nube. ¡Conviértete en el mejor ingeniero de datos!" },
+            { id: 4, title: "Cyberpunk Odyssey", price: 120000, genre: "RPG / Acción", img: "linear-gradient(to right, #fc4a1a, #f7b733)", desc: "Explora la inmensa ciudad del futuro. Personaliza a tu personaje con implantes cibernéticos y domina el inframundo criminal." },
+            { id: 5, title: "Java NetBeans Coder", price: 20000, genre: "Puzzle / Programación", img: "linear-gradient(to right, #0f2027, #2c5364)", desc: "Resuelve complejos rompecabezas lógicos escribiendo código eficiente. Compatible con entornos de C y Node.js para desafíos extra." },
+            { id: 6, title: "Pizza Delivery Ninja", price: 15000, genre: "Arcade / Casual", img: "linear-gradient(to right, #ff416c, #ff4b2b)", desc: "Entrega pizzas esquivando el caótico tráfico de la ciudad a gran velocidad. ¿Llegará caliente la de Little Caesars?" }
+        ];
+
+        // Persistencia y Estado
+        let wallet = parseInt(localStorage.getItem('vapor_wallet')) || 0;
+        let library = JSON.parse(localStorage.getItem('vapor_library')) || [];
+        let currentGame = null;
+
+        document.getElementById('wallet-balance').innerText = `$${wallet.toLocaleString()} COP`;
+        document.getElementById('profile-games-count').innerText = library.length;
+
+        // Navegación
+        function showSection(id) {
+            document.querySelectorAll('.container').forEach(c => c.classList.remove('active-section'));
+            document.getElementById(id).classList.add('active-section');
+            if (id === 'biblioteca') renderLibrary();
+            if (id === 'perfil') document.getElementById('profile-games-count').innerText = library.length;
+        }
+
+        // Tienda
+        function renderStore(filter = '') {
+            const grid = document.getElementById('store-grid');
+            grid.innerHTML = '';
+            games.filter(g => g.title.toLowerCase().includes(filter.toLowerCase()) || g.genre.toLowerCase().includes(filter.toLowerCase()))
+                 .forEach(game => {
+                grid.innerHTML += `
+                    <div class="game-card" onclick="openGame(${game.id})">
+                        <div class="game-img" style="background: ${game.img}"></div>
+                        <div class="game-info">
+                            <div class="game-title">${game.title}</div>
+                            <div class="game-price">
+                                <span style="font-size: 12px; color: #8f98a0; padding: 3px 8px; background: rgba(255,255,255,0.1); border-radius: 3px;">${game.genre.split(' / ')[0]}</span>
+                                <span class="price">$${game.price.toLocaleString()} COP</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterGames() {
+            renderStore(document.getElementById('search').value);
+        }
+
+        function addFunds() {
+            wallet += 50000;
+            localStorage.setItem('vapor_wallet', wallet);
+            document.getElementById('wallet-balance').innerText = `$${wallet.toLocaleString()} COP`;
+            alert("¡Transacción exitosa! Has recargado $50,000 COP a tu cartera VAPOR.");
+        }
+
+        // Modal y Compra
+        function openGame(id) {
+            currentGame = games.find(g => g.id === id);
+            document.getElementById('modal-title').innerText = currentGame.title;
+            document.getElementById('modal-img').style.background = currentGame.img;
+            document.getElementById('modal-desc').innerText = currentGame.desc;
+            document.getElementById('modal-price').innerText = `$${currentGame.price.toLocaleString()} COP`;
+            
+            const buyBtn = document.getElementById('buy-btn');
+            if(library.includes(id)) {
+                buyBtn.innerText = "Ya está en tu biblioteca";
+                buyBtn.disabled = true;
+                buyBtn.style.background = "rgba(255,255,255,0.1)";
+                buyBtn.style.color = "#8f98a0";
+                buyBtn.style.cursor = "not-allowed";
+            } else {
+                buyBtn.innerText = "Comprar para mi cuenta";
+                buyBtn.disabled = false;
+                buyBtn.style.background = "linear-gradient(to right, #799905 5%, #536904 95%)";
+                buyBtn.style.color = "white";
+                buyBtn.style.cursor = "pointer";
+                buyBtn.onclick = () => buyGame(id);
+            }
+            document.getElementById('game-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('game-modal').style.display = 'none';
+        }
+
+        function buyGame(id) {
+            if (wallet >= currentGame.price) {
+                wallet -= currentGame.price;
+                library.push(id);
+                localStorage.setItem('vapor_wallet', wallet);
+                localStorage.setItem('vapor_library', JSON.stringify(library));
+                document.getElementById('wallet-balance').innerText = `$${wallet.toLocaleString()} COP`;
+                alert(`¡Gracias por tu compra! ${currentGame.title} se ha añadido a tu biblioteca.`);
+                closeModal();
+                showSection('biblioteca');
+            } else {
+                alert("Fondos insuficientes. Recarga tu cartera VAPOR antes de completar la transacción.");
+            }
+        }
+
+        /* Funciones de Biblioteca */
+        let activeLibraryGame = null;
+        function renderLibrary() {
+            const list = document.getElementById('lib-list');
+            list.innerHTML = '';
+            if(library.length === 0) {
+                list.innerHTML = '<div style="color: #8f98a0; padding: 20px; text-align: center; margin-top: 50px;">Tu biblioteca está vacía.<br><br>Ve a la TIENDA para encontrar juegos.</div>';
+                return;
+            }
+            library.forEach(id => {
+                const game = games.find(g => g.id === id);
+                list.innerHTML += `<div class="game-list-item" onclick="selectLibraryGame(${id})">${game.title}</div>`;
+            });
+            
+            // Auto seleccionar el primero si no hay ninguno seleccionado
+            if(!activeLibraryGame && library.length > 0) {
+                selectLibraryGame(library[0]);
+            }
+        }
+
+        function selectLibraryGame(id) {
+            activeLibraryGame = games.find(g => g.id === id);
+            const detail = document.getElementById('lib-detail');
+            detail.querySelector('h2').innerText = activeLibraryGame.title;
+            detail.children[1].style.background = activeLibraryGame.img;
+            
+            // Simular estado de instalación
+            const isInstalled = localStorage.getItem(`installed_${id}`) === 'true';
+            document.getElementById('play-btn').style.display = isInstalled ? 'block' : 'none';
+            document.getElementById('play-stats').style.display = isInstalled ? 'block' : 'none';
+            document.getElementById('install-btn').style.display = isInstalled ? 'none' : 'block';
+            document.getElementById('install-bar').style.display = 'none';
+            
+            let hours = localStorage.getItem(`hours_${id}`) || 0;
+            document.getElementById('play-hours').innerText = `${hours} horas`;
+            
+            // Detener cualquier juego actual en la UI al cambiar
+            if(playingInterval) {
+                clearInterval(playingInterval);
+                playingInterval = null;
+                const btn = document.getElementById('play-btn');
+                btn.innerText = "JUGAR";
+                btn.style.background = "#4c6b22";
+            }
+        }
+
+        function installGame() {
+            document.getElementById('install-btn').style.display = 'none';
+            const barContainer = document.getElementById('install-bar');
+            const barFill = document.getElementById('install-fill');
+            barContainer.style.display = 'block';
+            barFill.style.width = '0%';
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 15) + 5;
+                if(progress > 100) progress = 100;
+                barFill.style.width = `${progress}%`;
+                
+                if(progress >= 100) {
+                    clearInterval(interval);
+                    localStorage.setItem(`installed_${activeLibraryGame.id}`, 'true');
+                    setTimeout(() => {
+                        barContainer.style.display = 'none';
+                        document.getElementById('play-btn').style.display = 'block';
+                        document.getElementById('play-stats').style.display = 'block';
+                    }, 500);
+                }
+            }, 300);
+        }
+
+        let playingInterval = null;
+        function playGame() {
+            const btn = document.getElementById('play-btn');
+            if(btn.innerText === "JUGAR") {
+                btn.innerText = "DETENER (Ejecutándose)";
+                btn.style.background = "#cc0000";
+                
+                playingInterval = setInterval(() => {
+                    let hours = parseFloat(localStorage.getItem(`hours_${activeLibraryGame.id}`) || 0);
+                    hours += 0.1; 
+                    localStorage.setItem(`hours_${activeLibraryGame.id}`, hours.toFixed(1));
+                    document.getElementById('play-hours').innerText = `${hours.toFixed(1)} horas`;
+                }, 2000); // Sube cada 2 segundos para la demo
+            } else {
+                btn.innerText = "JUGAR";
+                btn.style.background = "#4c6b22";
+                clearInterval(playingInterval);
+                playingInterval = null;
+            }
+        }
+
+        // Chat
+        function toggleChat() {
+            const chat = document.getElementById('chat');
+            chat.classList.toggle('open');
+            const arrow = chat.querySelector('.chat-header span:nth-child(2)');
+            arrow.innerText = chat.classList.contains('open') ? '▼' : '▲';
+        }
+
+        // Post Comunidad
+        function makePost() {
+            const text = document.getElementById('post-text').value;
+            if(!text) return;
+            const container = document.getElementById('posts-container');
+            container.innerHTML = `
+                <div style="background: rgba(0,0,0,0.2); padding: 15px; margin-bottom: 10px; border-left: 3px solid var(--text-highlight);">
+                    <div style="color: var(--text-highlight); font-weight: bold; margin-bottom: 5px;">David (Tú)</div>
+                    <div>${text}</div>
+                </div>
+            ` + container.innerHTML;
+            document.getElementById('post-text').value = '';
+        }
+
+        // Clic fuera del modal para cerrarlo
+        window.onclick = function(event) {
+            const modal = document.getElementById('game-modal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // Inicializar
+        renderStore();
+    </script>
+</body>
+</html>
